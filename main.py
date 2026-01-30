@@ -9,8 +9,16 @@ URL = "https://racing.hkjc.com/racing/information/Chinese/Racing/LocalResults.as
 
 def get_latest():
     r = requests.get(URL, timeout=20)
+    print("HKJC status:", r.status_code)
+    print("HKJC content-type:", r.headers.get("content-type"))
+    print("HKJC first 200 chars:", r.text[:200].replace("\n", " "))
+
     soup = BeautifulSoup(r.text, "html.parser")
-    title = soup.title.text.strip()
+    title = (soup.title.text.strip() if soup.title else "")
+    print("Parsed title:", title)
+
+    if not title:
+        title = f"(抓取不到標題，HKJC status={r.status_code})"
     return title
 
 def send_telegram(msg):
@@ -19,7 +27,11 @@ def send_telegram(msg):
         "chat_id": CHAT_ID,
         "text": f"📢 香港馬會最新資訊\n\n{msg}\n\n{URL}"
     }
-    requests.post(api, data=data)
+
+    resp = requests.post(api, data=data, timeout=20)
+    print("Telegram status:", resp.status_code)
+    print("Telegram response:", resp.text)
+
 
 if __name__ == "__main__":
     news = get_latest()
